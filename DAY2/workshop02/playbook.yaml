@@ -1,0 +1,54 @@
+- name: Install code server
+  host: all
+  vars:
+    codeserver_archive: https://github.com/coder/code-server/releases/download/v4.7.0/code-server-4.7.0-linux-amd64.tar.gz
+    codeserver_dir: code-server-4.7.0-linux-amd64
+    codeserver_dir:
+    download_dir: /usr/local/opt
+  tasks:
+  - name: Create directory
+    file:
+    path: "{{ download_dir }}"
+    state: directory
+  - name: Check if archive exists
+    stat:
+      path: "{{ download_dir}}"/{{ codeserver_dir }}
+    register: cs_archive
+  - name: Download and untar archive
+    unarchive:
+      src: "{{ codeserver_archive }}"
+      dest: "{{ download_dir }}"
+      remote_src: true
+    when: not cs_archive.stat.exists
+  - name: Soft link codeserver
+    shell: |
+      cp -r //usr/local/opt/code-server-4.7.0-linux-amd64 /usr/lib/code-server
+      ln -s /usr/lib/code-server/bin/code-server /usr/bin/code-server
+      mkdir /var/lib/code-server
+  - name: Generate codeserver config
+    template:
+      src: ./code-server.service.j2
+      dest: /lib/systemd/system/code-server.service
+
+- name: Install nginx
+  apt:
+    update_cache: true
+    name: nginx
+    state: latest
+- name: generate nginx configuration for domain
+  template:
+    src: sample.code-server.conf.js
+    dest: /etc/nginx/site-available/code-server.conf
+- name: Enable server code-server .conf
+  file:
+    src: /etc/nginx/site-available/code-server.conf
+    dest: /etc/nginx/site-enabled/code-server.conf
+    state: link
+- name: Restart nginx
+  systemd:
+    daemon_reload: true
+    enabled: true
+    name: nginx
+    state: restarted
+
+
