@@ -1,8 +1,10 @@
 all:
+  vars:
+    ansible_connection: ssh
+    ansible_user: root
+    ansible_ssh_private_key_file: /opt/.ssh/wkday
   hosts:
     codeserver:
-      anssible_host: {{}}
-      ansible_user: root
-      ansible_ssh_private_key_file: /opt/.ssh/wkday
-      codeserver_domain:
-      codeserver_password:
+      ansible_host: 
+      codeserver_domain: codeserver-128.199.130.132.nip.io
+      codeserver_password: ansiblerocks
