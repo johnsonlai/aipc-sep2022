@@ -17,10 +17,7 @@ variable DO_token {
     type = string
     sensitive = true
 }
-variable replicas {
-    default = 3
-    type = number
-}
+
 
 variable private_key {
     type = string
@@ -30,3 +27,7 @@ variable public_key {
     type = string
 }
 
+variable "codeserver_password" {
+  type      = string
+  sensitive = true
+}

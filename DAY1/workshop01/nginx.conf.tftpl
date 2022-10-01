@@ -20,6 +20,7 @@ http {
 		%{ for p in container_ports }
 			server ${docker_host}:${p};
 		%{ endfor }
+	}
 	server {
 		listen 80;
 		location / {

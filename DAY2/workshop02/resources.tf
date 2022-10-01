@@ -2,30 +2,31 @@ resource digitalocean_ssh_key wkday {
   name = "wkday"
   public_key = file(var.public_key)
 }
-
-resource digitalocean_droplet nginx2 {
-  image  = var.DO_image
-  name   = "nginx2"
-  region = var.DO_region
-  size   = var.DO_size
-  ssh_keys = [digitalocean_ssh_key.wkday.id]
-
-  connection {
-    type = "ssh"
-    user = "root"
-    host = self.ipv4_address
-    private_key = file(var.private_key)
-  }
-
-
+resource digitalocean_droplet codeserver {
+    name = "codeserver"
+    image = var.DO_image
+    size = var.DO_size
+    region = var.DO_region
+    ssh_keys = [ digitalocean_ssh_key.wkday.id ]
 }
 
-resource local_file root_at_ip {
-    content = ""
-    filename = "root@${digitalocean_droplet.nginx2.ipv4_address}"
+resource local_file root_at_codeserver {
+    content = "The IP address is ${digitalocean_droplet.codeserver.ipv4_address}"
+    filename = "root@${digitalocean_droplet.codeserver.ipv4_address}"
+    file_permission = 644
 }
 
-output nginx_ip {
-    description = "Nginx IP"
-    value = digitalocean_droplet.nginx2.ipv4_address
+resource local_file inventory {
+    filename = "inventory.yaml"
+    content = templatefile("inventory.yaml.tftpl", {
+        private_key = var.private_key
+        droplet_ip = digitalocean_droplet.codeserver.ipv4_address
+        codeserver_domain: "codeserver-${digitalocean_droplet.codeserver.ipv4_address}.nip.io"
+        codeserver_password: var.codeserver_password
+    })
+    file_permission = 644
+}
+
+output codeserver_ip {
+    value = digitalocean_droplet.codeserver.ipv4_address
 }

@@ -1,17 +1,6 @@
-resource "digitalocean_ssh_key" "wkday" {
-    name = "wkday"
-    public_key = file(var.public_key)
-}
-
-data "digitalocean_image" "codeserverimg" {
-  name = "mydroplet"
-}
-
-resource "digitalocean_droplet" "codeserver" {
-  image  = data.digitalocean_image.codeserverimg.id
-  name   = "codeserver"
-  region = var.
-  size   = "s-1vcpu-1gb"
+resource digitalocean_ssh_key wkday {
+  name = "wkday"
+  public_key = file(var.public_key)
 }
 resource digitalocean_droplet codeserver {
     name = "codeserver"
@@ -19,6 +8,23 @@ resource digitalocean_droplet codeserver {
     size = var.DO_size
     region = var.DO_region
     ssh_keys = [ digitalocean_ssh_key.wkday.id ]
+
+  connection {
+    type        = "ssh"
+    user        = "root"
+    private_key = file(var.private_key)
+    host        = self.ipv4_address
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "sed -e 's/__CHANGE_THIS__/${var.codeserver_password}/' -i /lib/systemd/system/code-server.service",
+      "sed -e 's/__CHANGE_THIS__/${var.codeserver_fqdn}/' -i /etc/nginx/sites-available/code-server.conf",
+      "systemctl daemon-reload",
+      "systemctl restart code-server",
+      "systemctl restart nginx"
+    ]
+  }
 }
 
 resource local_file root_at_codeserver {
